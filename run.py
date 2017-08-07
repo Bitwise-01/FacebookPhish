@@ -1,5 +1,5 @@
 # Author: Ethical-H4CK3R
-# Date: 07/17/17
+# Date: 08/07/17
 # Description: Runs lighttpd server
 
 import os
@@ -51,14 +51,15 @@ class Engine(object):
  def kill(self):
   subprocess.Popen('pkill lighttpd',shell=True).wait()
   subprocess.Popen("for task in `lsof -i :80\
-                   | grep -v 'COMMAND' | awk '{print $1}'`;\
-                   do pkill $task;done",stdout=self.devnull,stderr=self.devnull,shell=True).wait()
+  | grep -v 'COMMAND' | grep -v 'firefox-e' | awk '{print $2}'`;\
+  do kill -15 $task;done",stdout=self.devnull,stderr=self.devnull,shell=True).wait()
 
  def lighttpdPath(self):
   return True if os.path.exists('/usr/sbin/lighttpd') else False
 
  def phpPath(self):
   return True if os.path.exists('/usr/bin/php7.0') else False
+
 
  def loading(self,msg):
   while self.installing:
@@ -67,11 +68,12 @@ class Engine(object):
     subprocess.call('clear',shell=True)
     print 'Installing {} {}'.format(msg,n*'.')
     time.sleep(.4)
-  
+
  def installLighttpd(self):
   self.installing = True
   threading.Thread(target=self.loading,args=['Lighttpd']).start()
-  subprocess.Popen('apt-get install lighttpd -y',stdout=self.devnull,stderr=self.devnull,shell=True).wait()
+  subprocess.Popen('apt-get install lighttpd -y',\
+  stdout=self.devnull,stderr=self.devnull,shell=True).wait()
   self.installing = False
   subprocess.call('clear',shell=True)
   if self.lighttpdPath():
@@ -83,7 +85,8 @@ class Engine(object):
  def installPhp(self):
   self.installing = True
   threading.Thread(target=self.loading,args=['Php7.0']).start()
-  subprocess.Popen('apt-get install php7.0 php7.0-cgi php7.0-mysql -y',stdout=self.devnull,stderr=self.devnull,shell=True).wait()
+  subprocess.Popen('apt-get install php7.0-cgi -y',\
+  stdout=self.devnull,stderr=self.devnull,shell=True).wait()
   self.installing = False
   subprocess.call('clear',shell=True)
   if self.phpPath():
@@ -93,8 +96,8 @@ class Engine(object):
    exit('Failed To Install Php7.0')
 
  def lighttpdService(self):
-  if not self.phpPath():self.installPhp()
-  if not self.lighttpdPath():self.installLighttpd()
+  self.installPhp()
+  self.installLighttpd()
   subprocess.Popen('service lighttpd restart',shell=True).wait()
 
  def lighttpdServer(self):
@@ -110,12 +113,12 @@ class Engine(object):
  def readLog(self):
   with open(self.output,'r') as f:
    for n in f:
-    subprocess.call('clear',shell=True) 
+    subprocess.call('clear',shell=True)
     print n.replace('\n','')
-  os.remove(self.output) 
+  os.remove(self.output)
 
-def main(): 
- engine = Engine() 
+def main():
+ engine = Engine()
  engine.ssl()
  engine.kill()
  engine.lighttpdService()
@@ -123,4 +126,4 @@ def main():
  engine.readLog()
 
 if __name__ == '__main__':
- exit('root access required') if os.getuid() else main()  
+ exit('root access required') if os.getuid() else main()
